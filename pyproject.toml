@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name            = "aicloudsentinel"
+version         = "1.0.0"
+description     = "AI Workload Security Scanner for OCI, AWS, and Azure — powered by Claude"
+readme          = "README.md"
+license         = {text = "MIT"}
+authors         = [{name = "Venkata Sai Geetham", email = "nvsaigeetham@github"}]
+keywords        = ["cloud security", "ai security", "llm security", "owasp", "cspm",
+                   "oci", "aws", "azure", "claude", "agentic ai"]
+classifiers     = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "openpyxl>=3.1.0",
+]
+
+[project.optional-dependencies]
+oci   = ["oci>=2.100.0"]
+aws   = ["boto3>=1.34.0"]
+azure = [
+    "azure-identity>=1.15.0",
+    "azure-mgmt-storage>=21.0.0",
+    "azure-mgmt-web>=7.0.0",
+    "azure-mgmt-cognitiveservices>=13.0.0",
+    "azure-mgmt-machinelearningservices>=3.0.0",
+    "azure-mgmt-keyvault>=10.0.0",
+]
+all   = ["aicloudsentinel[oci,aws,azure]"]
+dev   = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff",
+    "mypy",
+]
+
+[project.scripts]
+aicloudsentinel = "aicloudsentinel.cli:main"
+
+[project.urls]
+Homepage      = "https://github.com/SpecterBreach/AICloudSentinel"
+Repository    = "https://github.com/SpecterBreach/AICloudSentinel"
+Issues        = "https://github.com/SpecterBreach/AICloudSentinel/issues"
+Documentation = "https://github.com/SpecterBreach/AICloudSentinel#readme"
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
