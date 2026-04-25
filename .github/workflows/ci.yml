@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          pip install -e ".[dev]"
+
+      - name: Lint with ruff
+        run: ruff check aicloudsentinel/
+
+      - name: Type check with mypy
+        run: mypy aicloudsentinel/ --ignore-missing-imports
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+        continue-on-error: true   # tests require cloud credentials — don't fail CI
+
+  package-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Check package builds
+        run: |
+          pip install build
+          python -m build --wheel

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICloudSentinel — CLI Scan Output</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0a0a0f;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .window {
+    width: 960px;
+    background: #0f0f1a;
+    border-radius: 12px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.06),
+      0 40px 80px rgba(0,0,0,0.8),
+      0 0 60px rgba(0,180,255,0.04);
+    overflow: hidden;
+  }
+
+  .titlebar {
+    background: #1a1a2e;
+    padding: 13px 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .dot { width: 13px; height: 13px; border-radius: 50%; }
+  .dot.red    { background: #ff5f57; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green  { background: #28c840; }
+
+  .title-text {
+    margin-left: 12px;
+    font-size: 12px;
+    color: #4a5568;
+    letter-spacing: 0.05em;
+  }
+
+  .terminal {
+    padding: 24px 28px 32px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #c9d1d9;
+    min-height: 580px;
+  }
+
+  .banner-ascii {
+    color: #00d4ff;
+    font-size: 9px;
+    line-height: 1.3;
+    margin-bottom: 6px;
+    opacity: 0.85;
+  }
+
+  .banner-sub {
+    color: #4a5568;
+    font-size: 11px;
+    margin-bottom: 4px;
+    padding-left: 2px;
+  }
+
+  .banner-sub .highlight { color: #00d4ff; }
+  .banner-sub .version   { color: #2d3748; }
+  .banner-sub .link      { color: #3b82f6; }
+
+  .spacer { height: 14px; }
+  .spacer-sm { height: 6px; }
+
+  .prompt {
+    color: #4a5568;
+  }
+  .cmd { color: #e2e8f0; }
+  .flag { color: #7dd3fc; }
+  .val  { color: #86efac; }
+
+  .info    { color: #60a5fa; }
+  .success { color: #4ade80; }
+  .warn    { color: #fbbf24; }
+
+  .step {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 2px 0;
+  }
+
+  .arrow { color: #00d4ff; }
+  .check { color: #4ade80; }
+  .warn-icon { color: #fbbf24; }
+
+  .separator {
+    color: #1e293b;
+    margin: 10px 0 6px;
+    font-size: 11px;
+  }
+
+  /* Findings table */
+  .findings-header {
+    display: grid;
+    grid-template-columns: 100px 1fr 220px 130px;
+    gap: 0;
+    color: #4a5568;
+    font-size: 11px;
+    padding: 6px 0 4px;
+    border-bottom: 1px solid #1e293b;
+    margin-top: 10px;
+  }
+
+  .findings-divider {
+    color: #1e293b;
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .finding-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 220px 130px;
+    gap: 0;
+    padding: 3px 0;
+    font-size: 11.5px;
+    animation: fadeIn 0.3s ease forwards;
+    opacity: 0;
+  }
+
+  @keyframes fadeIn {
+    to { opacity: 1; }
+  }
+
+  .finding-row:nth-child(1)  { animation-delay: 0.8s; }
+  .finding-row:nth-child(2)  { animation-delay: 1.0s; }
+  .finding-row:nth-child(3)  { animation-delay: 1.2s; }
+  .finding-row:nth-child(4)  { animation-delay: 1.4s; }
+  .finding-row:nth-child(5)  { animation-delay: 1.6s; }
+  .finding-row:nth-child(6)  { animation-delay: 1.8s; }
+  .finding-row:nth-child(7)  { animation-delay: 2.0s; }
+
+  .risk-critical { color: #f87171; font-weight: 600; }
+  .risk-high     { color: #fb923c; font-weight: 600; }
+  .risk-medium   { color: #fbbf24; font-weight: 600; }
+  .risk-low      { color: #4ade80; font-weight: 600; }
+
+  .owasp-tag { color: #818cf8; }
+
+  .summary-block {
+    margin-top: 16px;
+    border-top: 1px solid #1e293b;
+    padding-top: 12px;
+  }
+
+  .summary-title {
+    color: #e2e8f0;
+    font-weight: 600;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin: 10px 0;
+  }
+
+  .kpi {
+    background: #161625;
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+    padding: 8px 12px;
+    text-align: center;
+  }
+
+  .kpi-label { font-size: 9px; color: #4a5568; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .kpi-value { font-size: 20px; font-weight: 700; }
+
+  .kpi.critical .kpi-value { color: #f87171; }
+  .kpi.high     .kpi-value { color: #fb923c; }
+  .kpi.medium   .kpi-value { color: #fbbf24; }
+  .kpi.low      .kpi-value { color: #4ade80; }
+  .kpi.total    .kpi-value { color: #e2e8f0; }
+
+  .narrative {
+    background: #0d1117;
+    border: 1px solid #1e293b;
+    border-left: 3px solid #00d4ff;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin: 10px 0;
+  }
+
+  .output-line {
+    display: flex;
+    gap: 6px;
+    margin: 2px 0;
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 7px;
+    height: 14px;
+    background: #00d4ff;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+    opacity: 0.8;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .ai-tag {
+    display: inline-block;
+    background: rgba(139,92,246,0.15);
+    border: 1px solid rgba(139,92,246,0.3);
+    color: #a78bfa;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="titlebar">
+    <div class="dot red"></div>
+    <div class="dot yellow"></div>
+    <div class="dot green"></div>
+    <span class="title-text">zsh — aicloudsentinel — 192×48</span>
+  </div>
+
+  <div class="terminal">
+    <!-- Banner -->
+    <div class="banner-ascii">
+  ╔═══════════════════════════════════════════════════════════╗<br>
+  ║   █████╗ ██╗ ██████╗██╗      ██████╗ ██╗   ██╗██████╗   ║<br>
+  ║  ██╔══██╗██║██╔════╝██║     ██╔═══██╗██║   ██║██╔══██╗  ║<br>
+  ║  ███████║██║██║     ██║     ██║   ██║██║   ██║██║  ██║  ║<br>
+  ║  ██╔══██║██║██║     ██║     ██║   ██║██║   ██║██║  ██║  ║<br>
+  ║  ██║  ██║██║╚██████╗███████╗╚██████╔╝╚██████╔╝██████╔╝  ║<br>
+  ║  ╚═╝  ╚═╝╚═╝ ╚═════╝╚══════╝ ╚═════╝  ╚═════╝ ╚═════╝  ║<br>
+  ╚═══════════════════════════════════════════════════════════╝
+    </div>
+    <div class="banner-sub">
+      <span class="highlight">AI Workload Security Scanner</span>&nbsp;&nbsp;
+      <span class="version">v1.0.0</span>&nbsp;&nbsp;
+      <span class="highlight">OCI · AWS · Azure</span>
+    </div>
+    <div class="banner-sub">
+      OWASP LLM Top 10 · OWASP Agentic AI Top 10 · Powered by Claude&nbsp;&nbsp;
+      <span class="link">github.com/SpecterBreach/AICloudSentinel</span>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- Command -->
+    <div>
+      <span class="prompt">❯ </span>
+      <span class="cmd">aicloudsentinel scan oci</span>
+      <span class="flag"> --compartment-id </span><span class="val">ocid1.compartment.oc1..exampleabc</span>
+      <span class="flag"> --region </span><span class="val">us-ashburn-1</span>
+      <span class="flag"> --output </span><span class="val">report.xlsx</span>
+    </div>
+
+    <div class="spacer-sm"></div>
+
+    <div class="step"><span class="arrow">►</span> Starting OCI scan...</div>
+    <div class="spacer-sm"></div>
+
+    <!-- Scan steps -->
+    <div style="color:#4a5568; font-size:11.5px; padding-left:4px;">
+      <div>[INFO] Scanning Object Storage buckets...</div>
+      <div>[INFO] Scanning Functions for exposed LLM API keys...</div>
+      <div>[INFO] Scanning IAM for over-privileged AI agent accounts...</div>
+      <div>[INFO] Scanning Compute for IMDS exposure on AI workloads...</div>
+      <div>[INFO] Scanning Data Science projects...</div>
+    </div>
+
+    <div class="spacer-sm"></div>
+    <div class="step"><span class="check">✓</span> <span>Scan completed in <span style="color:#e2e8f0">3.4s</span> — <strong style="color:#e2e8f0">9</strong> findings</span></div>
+    <div class="spacer-sm"></div>
+    <div class="step"><span class="arrow">►</span> Running Claude AI analysis <span style="color:#4a5568">(4 priority findings)</span>...</div>
+    <div class="step"><span class="check">✓</span> AI analysis complete <span class="ai-tag">claude-sonnet</span></div>
+
+    <div class="spacer-sm"></div>
+
+    <!-- Findings table -->
+    <div class="findings-header">
+      <span>RISK</span>
+      <span>TITLE</span>
+      <span>RESOURCE</span>
+      <span>OWASP</span>
+    </div>
+    <div class="findings-divider">────────── ──────────────────────────────────────────────────── ──────────────────────── ──────────────────────</div>
+
+    <div class="findings-table">
+      <div class="finding-row">
+        <span class="risk-critical">CRITICAL  </span>
+        <span>AI model bucket has public read access</span>
+        <span style="color:#94a3b8">  prod-model-weights</span>
+        <span class="owasp-tag">  LLM02, ASI08</span>
+      </div>
+      <div class="finding-row">
+        <span class="risk-critical">CRITICAL  </span>
+        <span>LLM API key exposed in Function config</span>
+        <span style="color:#94a3b8">  ai-inference-fn</span>
+        <span class="owasp-tag">  LLM07, ASI04</span>
+      </div>
+      <div class="finding-row">
+        <span class="risk-high">HIGH      </span>
+        <span>AI agent policy grants excessive permissions</span>
+        <span style="color:#94a3b8">  agent-policy-prod</span>
+        <span class="owasp-tag">  LLM06, ASI02</span>
+      </div>
+      <div class="finding-row">
+        <span class="risk-high">HIGH      </span>
+        <span>Compute instance has unauthenticated IMDSv1</span>
+        <span style="color:#94a3b8">  llm-inference-vm-01</span>
+        <span class="owasp-tag">  LLM02, ASI04</span>
+      </div>
+      <div class="finding-row">
+        <span class="risk-medium">MEDIUM    </span>
+        <span>AI model bucket versioning disabled</span>
+        <span style="color:#94a3b8">  prod-model-weights</span>
+        <span class="owasp-tag">  LLM04, ASI03</span>
+      </div>
+      <div class="finding-row">
+        <span class="risk-medium">MEDIUM    </span>
+        <span>Notebook session has no VCN subnet restriction</span>
+        <span style="color:#94a3b8">  ds-notebook-prod</span>
+        <span class="owasp-tag">  LLM02, ASI08</span>
+      </div>
+      <div class="finding-row">
+        <span class="risk-low">LOW       </span>
+        <span>AI model bucket has no cross-region replication</span>
+        <span style="color:#94a3b8">  prod-model-weights</span>
+        <span class="owasp-tag">  LLM10</span>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-block">
+      <div style="color:#4a5568; margin-bottom:8px;">  ────────────────────────────────────────────────────────────────────────</div>
+      <div class="summary-title">  SCAN COMPLETE  ·  OCI-SCAN-A3F7B1  ·  OCI</div>
+      <div style="color:#4a5568; margin-bottom:10px;">  ────────────────────────────────────────────────────────────────────────</div>
+
+      <div class="summary-grid">
+        <div class="kpi critical"><div class="kpi-label">Critical</div><div class="kpi-value">2</div></div>
+        <div class="kpi high"><div class="kpi-label">High</div><div class="kpi-value">2</div></div>
+        <div class="kpi medium"><div class="kpi-label">Medium</div><div class="kpi-value">2</div></div>
+        <div class="kpi low"><div class="kpi-label">Low</div><div class="kpi-value">1</div></div>
+        <div class="kpi total"><div class="kpi-label">Total</div><div class="kpi-value">7</div></div>
+      </div>
+
+      <div class="narrative">
+        This OCI environment has 2 critical findings that require immediate action. A production model weights bucket is publicly readable, meaning any actor with the bucket name can download fine-tuned model artefacts. Simultaneously, an OCI Function is storing a live LLM provider API key in plaintext config — rotate this key immediately.
+      </div>
+
+      <div style="margin-top:10px; font-size:11.5px;">
+        <div><span style="color:#e2e8f0; font-weight:600">  Excel report:</span> <span style="color:#4ade80">report.xlsx</span></div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+    <div style="font-size:11px; color:#2d3748">  <span class="cursor"></span></div>
+  </div>
+</div>
+</body>
+</html>

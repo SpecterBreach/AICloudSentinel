@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICloudSentinel — Priority Actions Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f0f1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .window {
+    width: 1060px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.07);
+  }
+
+  .chrome {
+    background: #217346;
+    padding: 10px 16px 0;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-top: 8px;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    font-size: 11px;
+    border-radius: 4px 4px 0 0;
+    font-weight: 500;
+  }
+
+  .tab.active   { background: #fff; color: #217346; }
+  .tab.inactive { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.8); }
+
+  .formula-bar {
+    background: #f3f3f3;
+    border-bottom: 1px solid #ddd;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #333;
+  }
+
+  .cell-ref {
+    background: white;
+    border: 1px solid #bbb;
+    padding: 2px 8px;
+    font-size: 11px;
+    width: 50px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .sheet-content {
+    padding: 0;
+    overflow-x: auto;
+  }
+
+  /* Table header */
+  .findings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+
+  .findings-table th {
+    background: #0D1B2A;
+    color: #94a3b8;
+    padding: 9px 12px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    border-right: 1px solid #1e293b;
+    white-space: nowrap;
+  }
+
+  .findings-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    border-right: 1px solid #f8fafc;
+    vertical-align: top;
+    line-height: 1.55;
+    color: #334155;
+    font-size: 11px;
+  }
+
+  .findings-table tr:nth-child(even) td {
+    background: #f8fafc;
+  }
+
+  .risk-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+
+  .risk-critical { background: #e11d48; color: white; }
+  .risk-high     { background: #ea580c; color: white; }
+  .risk-medium   { background: #ca8a04; color: white; }
+  .risk-low      { background: #16a34a; color: white; }
+
+  .provider-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .provider-oci   { background: #fff1f2; color: #be123c; border: 1px solid #fecdd3; }
+  .provider-aws   { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+  .provider-azure { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+  .owasp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+  }
+
+  .owasp-tag {
+    background: #f0f4ff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+
+  .owasp-tag.agentic {
+    background: #fdf4ff;
+    color: #9333ea;
+    border-color: #e9d5ff;
+  }
+
+  .attack-scenario {
+    color: #7f1d1d;
+    background: #fff5f5;
+    border-left: 2px solid #e11d48;
+    padding: 6px 8px;
+    border-radius: 0 4px 4px 0;
+    font-size: 10.5px;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+
+  .remediation {
+    color: #14532d;
+    font-size: 10.5px;
+    line-height: 1.6;
+  }
+
+  .remediation ol {
+    margin: 0;
+    padding-left: 14px;
+  }
+
+  .remediation li {
+    margin-bottom: 2px;
+  }
+
+  .ai-label {
+    display: inline-block;
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: white;
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-bottom: 4px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .page-header {
+    padding: 14px 16px 10px;
+    background: #fff;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .page-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0D1B2A;
+  }
+
+  .page-subtitle {
+    font-size: 11px;
+    color: #64748b;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filter-chip {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 10px;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .filter-chip.active {
+    background: #0D1B2A;
+    color: white;
+    border-color: #0D1B2A;
+  }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="chrome">
+    <div class="tabs">
+      <div class="tab inactive">Executive Summary</div>
+      <div class="tab inactive">All Findings</div>
+      <div class="tab active">Priority Actions</div>
+      <div class="tab inactive">OWASP Heatmap</div>
+    </div>
+  </div>
+
+  <div class="formula-bar">
+    <span class="cell-ref">A1</span>
+    <span>ƒx</span>
+    <span>Priority Actions — CRITICAL and HIGH findings with AI-generated remediation</span>
+  </div>
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Priority Actions — CRITICAL & HIGH Findings</div>
+      <div class="page-subtitle">4 findings · AI attack scenarios + remediation by Claude · Scan: OCI-SCAN-A3F7B1</div>
+    </div>
+    <div class="filter-bar">
+      <span class="filter-chip active">ALL PROVIDERS</span>
+      <span class="filter-chip">OCI</span>
+      <span class="filter-chip">AWS</span>
+      <span class="filter-chip">Azure</span>
+    </div>
+  </div>
+
+  <div class="sheet-content">
+    <table class="findings-table">
+      <thead>
+        <tr>
+          <th style="width:80px">Risk</th>
+          <th style="width:220px">Title</th>
+          <th style="width:70px">Provider</th>
+          <th style="width:120px">Resource</th>
+          <th style="width:100px">OWASP</th>
+          <th style="width:260px">AI Attack Scenario</th>
+          <th>AI Remediation Steps</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td><span class="risk-badge risk-critical">CRITICAL</span></td>
+          <td style="font-weight:600; color:#0f172a;">AI model bucket has public read access</td>
+          <td><span class="provider-badge provider-oci">OCI</span></td>
+          <td style="font-family:monospace; font-size:10px; color:#475569;">prod-model-weights<br><span style="color:#94a3b8">Object Storage</span></td>
+          <td>
+            <div class="owasp-tags">
+              <span class="owasp-tag">LLM02</span>
+              <span class="owasp-tag">LLM04</span>
+              <span class="owasp-tag agentic">ASI08</span>
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="attack-scenario">
+              An adversary discovers the bucket name via passive reconnaissance or OCI Storage URL enumeration, downloads the fine-tuned model weights, then either re-hosts the model commercially or reverse-engineers training data to reconstruct proprietary datasets — all without any authentication.
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="remediation">
+              <ol>
+                <li>Set <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">public_access_type=NoPublicAccess</code> in OCI Console → Object Storage → Edit Bucket</li>
+                <li>Audit existing pre-authenticated requests (PARs) — revoke any with indefinite expiry</li>
+                <li>Enable OCI Object Storage access logs → route to a SIEM for alerting</li>
+                <li>Add a bucket policy explicitly denying public principals</li>
+                <li>Rotate any credentials that may have been used to access the bucket</li>
+              </ol>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="risk-badge risk-critical">CRITICAL</span></td>
+          <td style="font-weight:600; color:#0f172a;">LLM API key exposed in Function config (plaintext)</td>
+          <td><span class="provider-badge provider-oci">OCI</span></td>
+          <td style="font-family:monospace; font-size:10px; color:#475569;">ai-inference-fn<br><span style="color:#94a3b8">OCI Function</span></td>
+          <td>
+            <div class="owasp-tags">
+              <span class="owasp-tag">LLM07</span>
+              <span class="owasp-tag agentic">ASI04</span>
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="attack-scenario">
+              An insider or compromised CI/CD principal with <code style="background:#fff5f5;padding:0 3px;border-radius:2px;font-size:10px">functions:GetFunction</code> reads the config, extracts the API key, then runs unbounded LLM inference — accumulating thousands in provider costs — or uses the key to exfiltrate conversation history from the provider's API logs.
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="remediation">
+              <ol>
+                <li><strong>Rotate the exposed key immediately</strong> in the LLM provider dashboard</li>
+                <li>Create an OCI Vault secret for the new key</li>
+                <li>Update Function config to reference Vault secret OCID instead of plaintext value</li>
+                <li>Grant Function dynamic group <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">secret-bundles:read</code> on the specific secret only</li>
+                <li>Scan all other Functions and App configs for similar patterns</li>
+              </ol>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="risk-badge risk-high">HIGH</span></td>
+          <td style="font-weight:600; color:#0f172a;">AI/GPU EC2 instance has IMDSv1 enabled (unauthenticated)</td>
+          <td><span class="provider-badge provider-aws">AWS</span></td>
+          <td style="font-family:monospace; font-size:10px; color:#475569;">llm-worker-p3.2xl<br><span style="color:#94a3b8">EC2 Instance</span></td>
+          <td>
+            <div class="owasp-tags">
+              <span class="owasp-tag">LLM02</span>
+              <span class="owasp-tag agentic">ASI04</span>
+              <span class="owasp-tag agentic">ASI08</span>
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="attack-scenario">
+              A prompt injection attack against the LLM inference endpoint triggers an outbound HTTP request to <code style="background:#fff5f5;padding:0 3px;border-radius:2px;font-size:10px">169.254.169.254/latest/meta-data/iam/security-credentials/</code>, returning temporary AWS credentials — giving the attacker full access to every service the instance role permits without touching a password.
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="remediation">
+              <ol>
+                <li>Set <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">HttpTokens=required</code> via EC2 console → Actions → Instance Settings → Modify instance metadata options</li>
+                <li>Apply account-wide SCP: <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">ec2:ModifyInstanceMetadataOptions</code> deny without <code>imdsv2</code> condition</li>
+                <li>Enable AWS Config rule <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">ec2-imdsv2-check</code> in all regions</li>
+                <li>Scope the instance IAM role to minimum required permissions for inference workload</li>
+              </ol>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td><span class="risk-badge risk-high">HIGH</span></td>
+          <td style="font-weight:600; color:#0f172a;">Azure AI Services account has unrestricted public access</td>
+          <td><span class="provider-badge provider-azure">Azure</span></td>
+          <td style="font-family:monospace; font-size:10px; color:#475569;">openai-prod-eastus<br><span style="color:#94a3b8">Cognitive Services</span></td>
+          <td>
+            <div class="owasp-tags">
+              <span class="owasp-tag">LLM02</span>
+              <span class="owasp-tag">LLM10</span>
+              <span class="owasp-tag agentic">ASI04</span>
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="attack-scenario">
+              An attacker who obtains a static API key (from a leaked .env file, a public GitHub repo, or a compromised developer machine) can make unrestricted calls to the Azure OpenAI endpoint from any IP — running prompt injection campaigns, exfiltrating conversation context, or exhausting the token quota causing service disruption for legitimate applications.
+            </div>
+          </td>
+          <td>
+            <div class="ai-label">CLAUDE AI</div>
+            <div class="remediation">
+              <ol>
+                <li>Set <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">publicNetworkAccess=Disabled</code> and configure Azure Private Endpoint</li>
+                <li>Set <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">disableLocalAuth=true</code> to force Entra ID authentication</li>
+                <li>Assign callers the <code style="background:#f1f5f9;padding:0 3px;border-radius:2px;font-size:10px">Cognitive Services User</code> role via RBAC</li>
+                <li>Enable Diagnostic Settings → route logs to Azure Monitor / Sentinel</li>
+                <li>Rotate both API keys via Azure Portal → Keys and Endpoint</li>
+              </ol>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

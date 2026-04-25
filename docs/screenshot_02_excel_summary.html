@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AICloudSentinel — Excel Executive Summary</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a1a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    font-family: 'Sora', sans-serif;
+  }
+
+  .excel-window {
+    width: 1000px;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
+  }
+
+  /* Excel chrome */
+  .excel-chrome {
+    background: #217346;
+    padding: 10px 16px 0;
+  }
+
+  .excel-tabs {
+    display: flex;
+    gap: 2px;
+    margin-top: 8px;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    font-size: 11px;
+    border-radius: 4px 4px 0 0;
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+  }
+
+  .tab.active {
+    background: #fff;
+    color: #217346;
+  }
+
+  .tab.inactive {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.8);
+  }
+
+  .excel-formula-bar {
+    background: #f3f3f3;
+    border-bottom: 1px solid #ddd;
+    padding: 5px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 12px;
+    color: #333;
+  }
+
+  .cell-ref {
+    background: white;
+    border: 1px solid #bbb;
+    padding: 2px 8px;
+    font-size: 12px;
+    width: 60px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .formula-icon { color: #888; font-size: 13px; }
+
+  /* Sheet content */
+  .sheet {
+    background: #fff;
+    padding: 24px 32px 32px;
+  }
+
+  /* Title */
+  .report-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0D1B2A;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+
+  .report-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Metadata row */
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .meta-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+
+  .meta-label {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .meta-value {
+    font-size: 12px;
+    color: #0f172a;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* KPI row */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .kpi-card {
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .kpi-card.critical { background: #fff1f2; border: 1px solid #fecdd3; }
+  .kpi-card.critical::before { background: #e11d48; }
+  .kpi-card.high    { background: #fff7ed; border: 1px solid #fed7aa; }
+  .kpi-card.high::before { background: #ea580c; }
+  .kpi-card.medium  { background: #fefce8; border: 1px solid #fde68a; }
+  .kpi-card.medium::before { background: #ca8a04; }
+  .kpi-card.low     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .kpi-card.low::before { background: #16a34a; }
+  .kpi-card.total   { background: #f8fafc; border: 1px solid #cbd5e1; }
+  .kpi-card.total::before { background: #0D1B2A; }
+
+  .kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 6px; }
+  .kpi-card.critical .kpi-label { color: #be123c; }
+  .kpi-card.high .kpi-label     { color: #c2410c; }
+  .kpi-card.medium .kpi-label   { color: #a16207; }
+  .kpi-card.low .kpi-label      { color: #15803d; }
+  .kpi-card.total .kpi-label    { color: #475569; }
+
+  .kpi-value { font-size: 32px; font-weight: 700; }
+  .kpi-card.critical .kpi-value { color: #e11d48; }
+  .kpi-card.high .kpi-value     { color: #ea580c; }
+  .kpi-card.medium .kpi-value   { color: #ca8a04; }
+  .kpi-card.low .kpi-value      { color: #16a34a; }
+  .kpi-card.total .kpi-value    { color: #0D1B2A; }
+
+  /* Two column layout */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .section-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    background: #0D1B2A;
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .section-body {
+    padding: 14px;
+  }
+
+  .summary-text {
+    font-size: 11.5px;
+    color: #334155;
+    line-height: 1.75;
+  }
+
+  /* Provider bar chart */
+  .chart-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .chart-item { display: flex; align-items: center; gap: 10px; }
+
+  .chart-label {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 600;
+    width: 40px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .bar-track {
+    flex: 1;
+    background: #e2e8f0;
+    border-radius: 4px;
+    height: 22px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 10px;
+    font-weight: 600;
+    color: white;
+    transition: width 0.8s ease;
+  }
+
+  .bar-fill.oci   { background: linear-gradient(90deg, #e11d48, #be123c); width: 75%; }
+  .bar-fill.aws   { background: linear-gradient(90deg, #ea580c, #c2410c); width: 55%; }
+  .bar-fill.azure { background: linear-gradient(90deg, #2563eb, #1d4ed8); width: 45%; }
+
+  .chart-count { font-size: 12px; font-weight: 700; color: #0f172a; width: 20px; text-align: right; }
+
+  /* OWASP quick ref */
+  .owasp-list { list-style: none; }
+  .owasp-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 11px;
+  }
+
+  .owasp-item:last-child { border-bottom: none; }
+
+  .owasp-id {
+    background: #0D1B2A;
+    color: #00d4ff;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  .owasp-name { color: #334155; font-weight: 500; }
+
+  .owasp-count {
+    margin-left: auto;
+    font-weight: 700;
+    font-size: 13px;
+  }
+
+  .owasp-count.has-findings { color: #e11d48; }
+  .owasp-count.no-findings  { color: #94a3b8; }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 10px;
+    color: #94a3b8;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .powered-by {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .claude-badge {
+    background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="excel-window">
+
+  <div class="excel-chrome">
+    <div class="excel-tabs">
+      <div class="tab active">Executive Summary</div>
+      <div class="tab inactive">All Findings</div>
+      <div class="tab inactive">Priority Actions</div>
+      <div class="tab inactive">OWASP Heatmap</div>
+    </div>
+  </div>
+
+  <div class="excel-formula-bar">
+    <span class="cell-ref">B2</span>
+    <span class="formula-icon">ƒx</span>
+    <span>AICloudSentinel — AI Workload Security Report</span>
+  </div>
+
+  <div class="sheet">
+    <div class="report-title">AICloudSentinel — AI Workload Security Report</div>
+    <div class="report-subtitle">Scan ID: OCI-SCAN-A3F7B1 &nbsp;·&nbsp; Generated: 2026-04-25 09:14 UTC &nbsp;·&nbsp; Powered by Claude</div>
+
+    <div class="meta-grid">
+      <div class="meta-item">
+        <div class="meta-label">Cloud Provider</div>
+        <div class="meta-value">OCI</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Scan Scope</div>
+        <div class="meta-value" style="font-size:10px">ocid1.compartment.oc1..ex</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Scan Date</div>
+        <div class="meta-value">2026-04-25</div>
+      </div>
+      <div class="meta-item">
+        <div class="meta-label">Region</div>
+        <div class="meta-value">us-ashburn-1</div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card critical">
+        <div class="kpi-label">Critical</div>
+        <div class="kpi-value">2</div>
+      </div>
+      <div class="kpi-card high">
+        <div class="kpi-label">High</div>
+        <div class="kpi-value">2</div>
+      </div>
+      <div class="kpi-card medium">
+        <div class="kpi-label">Medium</div>
+        <div class="kpi-value">2</div>
+      </div>
+      <div class="kpi-card low">
+        <div class="kpi-label">Low</div>
+        <div class="kpi-value">1</div>
+      </div>
+      <div class="kpi-card total">
+        <div class="kpi-label">Total</div>
+        <div class="kpi-value">7</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="section-card">
+        <div class="section-header">Executive Summary (Claude AI)</div>
+        <div class="section-body">
+          <p class="summary-text">
+            This OCI environment presents a high-risk posture for its AI workloads. Two critical findings demand immediate action before any additional deployment occurs. The production model weights bucket is publicly readable, exposing fine-tuned model artefacts to unauthenticated access globally — this is both an intellectual property and a supply chain risk.
+          </p>
+          <br>
+          <p class="summary-text">
+            Simultaneously, an OCI Function handling live inference is storing a provider API key as a plaintext config variable. Any principal with <code style="font-family:monospace;background:#f1f5f9;padding:1px 4px;border-radius:3px;font-size:10px">functions:GetFunction</code> permission can extract this credential and make unbilled LLM calls or exfiltrate inference data.
+          </p>
+          <br>
+          <p class="summary-text">
+            <strong>Priority actions:</strong> (1) Set Object Storage bucket to NoPublicAccess immediately. (2) Rotate the exposed LLM API key and migrate to OCI Vault. (3) Enforce IMDSv2 on all GPU compute instances.
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-card" style="margin-bottom:12px;">
+          <div class="section-header">Findings by OWASP LLM Top 10</div>
+          <div class="section-body">
+            <ul class="owasp-list">
+              <li class="owasp-item">
+                <span class="owasp-id">LLM02</span>
+                <span class="owasp-name">Sensitive Information Disclosure</span>
+                <span class="owasp-count has-findings">4</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">LLM04</span>
+                <span class="owasp-name">Data and Model Poisoning</span>
+                <span class="owasp-count has-findings">2</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">LLM06</span>
+                <span class="owasp-name">Excessive Agency</span>
+                <span class="owasp-count has-findings">1</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">LLM07</span>
+                <span class="owasp-name">System Prompt Leakage</span>
+                <span class="owasp-count has-findings">1</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">LLM10</span>
+                <span class="owasp-name">Unbounded Consumption</span>
+                <span class="owasp-count has-findings">1</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">Findings by OWASP Agentic AI Top 10</div>
+          <div class="section-body">
+            <ul class="owasp-list">
+              <li class="owasp-item">
+                <span class="owasp-id">ASI04</span>
+                <span class="owasp-name">Identity Abuse</span>
+                <span class="owasp-count has-findings">3</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">ASI08</span>
+                <span class="owasp-name">Data Exfiltration via Agent</span>
+                <span class="owasp-count has-findings">3</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">ASI02</span>
+                <span class="owasp-name">Tool Misuse</span>
+                <span class="owasp-count has-findings">1</span>
+              </li>
+              <li class="owasp-item">
+                <span class="owasp-id">ASI03</span>
+                <span class="owasp-name">Memory Poisoning</span>
+                <span class="owasp-count has-findings">1</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span>AICloudSentinel v1.0.0 · github.com/SpecterBreach/AICloudSentinel · MIT License</span>
+      <div class="powered-by">
+        <span>AI analysis by</span>
+        <span class="claude-badge">Claude</span>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
