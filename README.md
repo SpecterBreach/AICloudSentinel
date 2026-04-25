@@ -2,13 +2,12 @@
 
 > **AI Workload Security Scanner for Cloud Infrastructure**
 > Detect misconfigurations in AI/LLM deployments across OCI, AWS, and Azure.
-> Powered by Claude. Mapped to OWASP LLM Top 10 and OWASP Agentic AI Top 10 (2026).
+> AI analysis via Anthropic API. Mapped to OWASP LLM Top 10 and OWASP Agentic AI Top 10 (2026).
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![OWASP LLM Top 10](https://img.shields.io/badge/OWASP-LLM%20Top%2010-red)](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 [![OWASP Agentic AI](https://img.shields.io/badge/OWASP-Agentic%20AI%20Top%2010-orange)](https://owasp.org/www-project-top-10-for-agentic-ai/)
-[![Powered by Claude](https://img.shields.io/badge/Powered%20by-Claude%20(Anthropic)-blueviolet)](https://anthropic.com)
 
 ---
 
@@ -17,7 +16,7 @@
 **CLI scan output — live findings with severity and OWASP mapping:**
 ![CLI Scan Output](docs/screenshots/01_cli_scan.png)
 
-**Excel Executive Summary — risk KPIs and Claude-generated narrative:**
+**Excel Executive Summary — risk KPIs and AI-generated narrative:**
 ![Excel Executive Summary](docs/screenshots/02_excel_summary.png)
 
 **Priority Actions sheet — AI attack scenarios and step-by-step remediation:**
@@ -35,7 +34,7 @@ Generic CSPM tools scan your cloud for misconfigurations — but they were built
 - An Azure AI Services account reachable from any IP with static key auth
 - An IAM role granting an AI agent `bedrock:*` or `manage all-resources`
 
-**AICloudSentinel fills that gap.** It scans the AI/LLM layer of your cloud infrastructure — the model storage, inference endpoints, agent service accounts, and LLM API credentials — and explains each finding using Claude.
+**AICloudSentinel fills that gap.** It scans the AI/LLM layer of your cloud infrastructure — the model storage, inference endpoints, agent service accounts, and LLM API credentials — and uses AI to explain each finding with attack scenarios and remediation steps.
 
 ---
 
@@ -60,16 +59,16 @@ Every finding is mapped to:
 
 ---
 
-## Claude-Powered AI Analysis
+## AI-Powered Analysis
 
-When `ANTHROPIC_API_KEY` is set, AICloudSentinel sends each finding to Claude for:
+When `ANTHROPIC_API_KEY` is set, AICloudSentinel uses the Anthropic API to enrich each finding with:
 
 1. **Attack scenario** — "What could an attacker actually do with this misconfiguration?"
 2. **Remediation steps** — Context-aware, provider-specific fix instructions
 3. **Executive summary** — A narrative report suitable for CISOs and security leads
 4. **Risk narrative** — 2-sentence posture summary for dashboards
 
-This is not a chatbot wrapper. It's a structured analysis pipeline that feeds finding context (resource type, cloud provider, evidence, OWASP mappings) to Claude and parses structured JSON back.
+This is not a chatbot wrapper. It's a structured analysis pipeline that feeds finding context (resource type, cloud provider, evidence, OWASP mappings) to the API and parses structured JSON back. Any LLM provider can be substituted by updating `claude_analyzer.py`.
 
 ---
 
@@ -162,7 +161,7 @@ print(result.executive_summary)
 ```
 
 ### Excel Report (4 sheets)
-- **Executive Summary** — risk KPIs, Claude-generated narrative, scan metadata
+- **Executive Summary** — risk KPIs, AI-generated narrative, scan metadata
 - **All Findings** — full sortable table with OWASP mappings and AI analysis
 - **Priority Actions** — CRITICAL + HIGH only with step-by-step remediation
 - **OWASP Heatmap** — finding counts mapped to both OWASP frameworks
